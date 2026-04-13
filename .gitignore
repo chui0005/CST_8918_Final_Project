@@ -6,3 +6,16 @@ node_modules
 .env
 
 .DS_Store
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+tfplan.binary
+plan_output.txt
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
