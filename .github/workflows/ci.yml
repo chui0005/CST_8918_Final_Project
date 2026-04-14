@@ -40,4 +40,18 @@ jobs:
 
       - name: Build
         run: npm run build
+  docker-validation:
+      name: Docker Build Check
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
 
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v3
+
+        - name: Test Build
+          uses: docker/build-push-action@v6
+          with:
+            context: .
+            push: false  # This ensures we only test the build, not upload it
