@@ -54,4 +54,4 @@ jobs:
           uses: docker/build-push-action@v6
           with:
             context: .
-            push: false  # This ensures we only test the build, not upload it
+            push: false  # Ensures we only test the build, not upload it
