@@ -48,3 +48,13 @@ resource "azurerm_role_assignment" "aks_network_contributor" {
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_kubernetes_cluster.main.identity[0].principal_id
 }
+
+# Grant the node pool (kubelet) identity pull access to ACR.
+# Uses kubelet_identity — the identity that runs on nodes and pulls images —
+# not identity[0] which is the control-plane identity.
+resource "azurerm_role_assignment" "aks_acr_pull" {
+  count                = var.acr_id != null ? 1 : 0
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
+}

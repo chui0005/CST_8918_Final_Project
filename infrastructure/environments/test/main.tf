@@ -94,6 +94,7 @@ module "app" {
   redis_host      = module.redis.redis_hostname
   redis_port      = module.redis.redis_ssl_port
   weather_api_key = var.weather_api_key
+  redis_password  = module.redis.primary_access_key
   replicas        = var.app_replicas
 
   depends_on = [module.aks_test]
