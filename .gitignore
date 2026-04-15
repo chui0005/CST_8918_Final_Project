@@ -11,6 +11,8 @@ node_modules
 **/.terraform/
 *.tfstate
 *.tfstate.backup
+*.tfvars
+!*.tfvars.example
 *.tfplan
 tfplan.binary
 plan_output.txt

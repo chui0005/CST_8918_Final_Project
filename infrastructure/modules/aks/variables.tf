@@ -60,6 +60,12 @@ variable "max_node_count" {
   default     = 3
 }
 
+variable "acr_id" {
+  description = "Resource ID of ACR to grant AcrPull to the node pool identity. Set to null to skip."
+  type        = string
+  default     = null
+}
+
 variable "tags" {
   description = "Tags applied to all AKS resources."
   type        = map(string)
