@@ -66,6 +66,24 @@ variable "acr_id" {
   default     = null
 }
 
+variable "attach_acr" {
+  description = "Whether to create the AcrPull role assignment. Must be set explicitly to avoid computed-value count errors."
+  type        = bool
+  default     = false
+}
+
+variable "service_cidr" {
+  description = "CIDR range for Kubernetes services. Must not overlap with the VNet or subnet CIDRs."
+  type        = string
+  default     = "10.96.0.0/16"
+}
+
+variable "dns_service_ip" {
+  description = "IP address for the Kubernetes DNS service. Must be within service_cidr."
+  type        = string
+  default     = "10.96.0.10"
+}
+
 variable "tags" {
   description = "Tags applied to all AKS resources."
   type        = map(string)

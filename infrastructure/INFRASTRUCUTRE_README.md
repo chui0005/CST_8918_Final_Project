@@ -38,7 +38,7 @@ Two AKS clusters are provisioned — one per environment.
 | Setting | Test | Prod |
 |---------|------|------|
 | Cluster name | `aks-cst8918-test-group-9` | `aks-cst8918-prod-group-9` |
-| Kubernetes version | 1.32 | 1.32 |
+| Kubernetes version | 1.33 | 1.33 |
 | VM size | Standard_B2s | Standard_B2s |
 | Node count | 1 (fixed) | 1–3 (autoscaling) |
 | Subnet | `subnet-test` | `subnet-prod` |
@@ -156,10 +156,15 @@ The following will be added in separate pull requests:
 The `weather_api_key` variable is sensitive and must **never** be committed to the repository. Supply it at apply time using one of:
 
 ```bash
-# Option A — environment variable (recommended for CI)
+# Option A — .env file (recommended for local development)
+# Copy .env.example to .env at the repo root and fill in your key.
+# Then source it before each terminal session:
+set -a && source ../../.env && set +a
+
+# Option B — inline environment variable (recommended for CI)
 export TF_VAR_weather_api_key="your-key-here"
 
-# Option B — gitignored local override file
+# Option C — gitignored local override file
 echo 'weather_api_key = "your-key-here"' > terraform.tfvars.local
 ```
 
@@ -171,16 +176,16 @@ cd environments/test
 terraform init -backend=false
 terraform validate
 
-# Full init and plan (requires backend to be bootstrapped)
+# Load secrets from .env (Option A), then init, plan, and apply
+# from the environments directory
+set -a && source ../../.env && set +a
 terraform init
 terraform plan
-
-# Apply
 terraform apply
 ```
 
 > **Note:** After a fresh `terraform apply` that creates a new AKS cluster, run the following before applying the app module:
 > ```bash
-> az aks get-credentials --resource-group <rg-name> --name <cluster-name>
+> az aks get-credentials --resource-group <rg-name> --name <cluster-name> --admin --overwrite-existing
 > ```
-> This updates `~/.kube/config` so the Kubernetes provider can authenticate to the new cluster.
+> The `--admin` flag uses the cluster's local admin credentials. This updates `~/.kube/config` so the Kubernetes provider can authenticate to the new cluster.
