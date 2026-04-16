@@ -59,9 +59,10 @@ module "aks_prod" {
   resource_group_name = module.network.resource_group_name
   location            = var.location
   dns_prefix          = "cst8918-prod-${var.group_number}"
-  kubernetes_version  = "1.32"
+  kubernetes_version  = "1.33"
   vnet_subnet_id      = module.network.subnet_ids["prod"]
-  acr_id              = module.acr.acr_id
+  acr_id     = module.acr.acr_id
+  attach_acr = true
 
   node_vm_size       = "Standard_B2s"
   enable_autoscaling = true

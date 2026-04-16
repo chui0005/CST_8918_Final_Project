@@ -49,9 +49,10 @@ module "aks_test" {
   resource_group_name = module.network.resource_group_name
   location            = var.location
   dns_prefix          = "cst8918-test-${var.group_number}"
-  kubernetes_version  = "1.32"
+  kubernetes_version  = "1.33"
   vnet_subnet_id      = module.network.subnet_ids["test"]
-  acr_id              = module.acr.acr_id
+  acr_id     = module.acr.acr_id
+  attach_acr = true
 
   node_vm_size       = "Standard_B2s"
   node_count         = 1
@@ -62,7 +63,7 @@ module "aks_test" {
 
 module "acr" {
   source              = "../../modules/acr"
-  acr_name            = "group${var.group_number}testacr"
+  acr_name            = "group${var.group_number}testacrst"
   resource_group_name = module.network.resource_group_name
   location            = var.location
   sku                 = var.acr_sku
@@ -72,7 +73,7 @@ module "acr" {
 
 module "redis" {
   source              = "../../modules/redis"
-  name                = "test-redis-${var.group_number}"
+  name                = "test-redis-${var.group_number}st"
   resource_group_name = module.network.resource_group_name
   location            = var.location
   sku_name            = var.redis_sku_name

@@ -15,7 +15,7 @@ This directory is a **one-time setup** that creates the Azure Storage Account us
 Storage account names must be globally unique across all of Azure. Verify the name before applying:
 
 ```bash
-az storage account check-name --name cst8918tfstate9
+az storage account check-name --name cst8918tfstate9st
 ```
 
 If the name is taken, edit `main.tf` and append a few random characters (e.g., `cst8918tfstate9ab`).
@@ -33,7 +33,7 @@ terraform apply
 After a successful apply, Terraform will print:
 
 ```
-storage_account_name = "cst8918tfstate9"
+storage_account_name = "cst8918tfstatest"
 container_name       = "tfstate"
 resource_group_name  = "rg-cst8918-tfstate"
 ```

@@ -18,7 +18,7 @@ module "backend" {
 
   resource_group_name  = "rg-cst8918-tfstate"
   location             = "canadacentral"
-  storage_account_name = "cst8918tfstate9" # must be globally unique; append random chars if taken
+  storage_account_name = "cst8918tfstate9st" # must be globally unique; append random chars if taken
   container_name       = "tfstate"
 
   tags = {
