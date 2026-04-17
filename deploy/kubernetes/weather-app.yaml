@@ -1,0 +1,54 @@
+# Create the secret in the cluster before rollout if you use the optional env block, for example:
+# kubectl create secret generic weather-app-secrets --from-literal=WEATHER_API_KEY=YOUR_KEY
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-app
+  labels:
+    app: weather-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weather-app
+  template:
+    metadata:
+      labels:
+        app: weather-app
+    spec:
+      containers:
+        - name: weather-app
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: WEATHER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: weather-app-secrets
+                  key: WEATHER_API_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-app
+  labels:
+    app: weather-app
+spec:
+  type: LoadBalancer
+  selector:
+    app: weather-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000

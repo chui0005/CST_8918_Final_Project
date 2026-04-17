@@ -9,7 +9,7 @@ resource "azurerm_kubernetes_cluster" "main" {
     name                 = "system"
     vm_size              = var.node_vm_size
     node_count           = var.enable_autoscaling ? null : var.node_count
-    auto_scaling_enabled = var.enable_autoscaling
+    enable_auto_scaling  = var.enable_autoscaling
     min_count            = var.enable_autoscaling ? var.min_node_count : null
     max_count            = var.enable_autoscaling ? var.max_node_count : null
     vnet_subnet_id       = var.vnet_subnet_id
@@ -34,11 +34,11 @@ resource "azurerm_kubernetes_cluster" "main" {
   }
 
   azure_active_directory_role_based_access_control {
+    managed            = true
     azure_rbac_enabled = true
   }
 
-  local_account_disabled    = true
-  automatic_upgrade_channel = "patch"
+  local_account_disabled = true
 
   tags = var.tags
 }

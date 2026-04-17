@@ -50,3 +50,15 @@ module "aks_prod" {
 
   tags = var.tags
 }
+
+# ACR is created by the test environment stack; prod cluster needs pull access for CI/CD images.
+data "azurerm_container_registry" "weather" {
+  name                = "cst8918acr${var.group_number}"
+  resource_group_name = "cst8918-final-project-group-${var.group_number}"
+}
+
+resource "azurerm_role_assignment" "aks_prod_kubelet_acr_pull" {
+  scope                = data.azurerm_container_registry.weather.id
+  role_definition_name = "AcrPull"
+  principal_id         = module.aks_prod.kubelet_identity_object_id
+}

@@ -22,3 +22,13 @@ output "aks_cluster_id" {
   description = "Resource ID of the test AKS cluster."
   value       = module.aks_test.cluster_id
 }
+
+output "acr_name" {
+  description = "ACR short name."
+  value       = module.acr.name
+}
+
+output "acr_login_server" {
+  description = "ACR login server for container image references."
+  value       = module.acr.login_server
+}
