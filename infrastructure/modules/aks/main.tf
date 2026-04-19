@@ -31,6 +31,9 @@ resource "azurerm_kubernetes_cluster" "main" {
     network_policy    = "azure"
     load_balancer_sku = "standard"
     outbound_type     = "loadBalancer"
+    # Avoid overlap with customer VNet subnets (e.g. 10.0.0.0/16); AKS defaults collide with common subnet layouts.
+    service_cidr   = "172.16.0.0/16"
+    dns_service_ip = "172.16.0.10"
   }
 
   azure_active_directory_role_based_access_control {

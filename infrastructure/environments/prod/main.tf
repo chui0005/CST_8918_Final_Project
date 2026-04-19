@@ -17,10 +17,11 @@ provider "azurerm" {
 module "network" {
   source = "../../modules/network"
 
-  resource_group_name = "cst8918-final-project-group-${var.group_number}"
-  location            = var.location
-  group_number        = var.group_number
-  environment         = "prod"
+  create_resource_group = false
+  resource_group_name   = "cst8918-final-project-group-${var.group_number}"
+  location              = var.location
+  group_number          = var.group_number
+  environment           = "prod"
 
   vnet_address_space = ["10.0.0.0/14"]
   subnet_config = {
@@ -40,7 +41,7 @@ module "aks_prod" {
   resource_group_name = module.network.resource_group_name
   location            = var.location
   dns_prefix          = "cst8918-prod-${var.group_number}"
-  kubernetes_version  = "1.32"
+  kubernetes_version  = "1.34"
   vnet_subnet_id      = module.network.subnet_ids["prod"]
 
   node_vm_size       = "Standard_B2s"

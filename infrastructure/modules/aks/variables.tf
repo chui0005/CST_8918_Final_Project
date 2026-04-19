@@ -17,7 +17,7 @@ variable "location" {
 variable "kubernetes_version" {
   description = "Kubernetes version for control plane and node pools."
   type        = string
-  default     = "1.32"
+  default     = "1.34"
 }
 
 variable "dns_prefix" {

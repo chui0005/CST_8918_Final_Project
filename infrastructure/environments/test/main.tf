@@ -40,7 +40,7 @@ module "aks_test" {
   resource_group_name = module.network.resource_group_name
   location            = var.location
   dns_prefix          = "cst8918-test-${var.group_number}"
-  kubernetes_version  = "1.32"
+  kubernetes_version  = "1.34"
   vnet_subnet_id      = module.network.subnet_ids["test"]
 
   node_vm_size       = "Standard_B2s"

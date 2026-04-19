@@ -19,13 +19,13 @@ variable "github_repository" {
 variable "tfstate_resource_group_name" {
   description = "Resource group that contains the Terraform remote state storage account."
   type        = string
-  default     = "rg-cst8918-tfstate"
+  default     = "kutt0011-cst8918-tf-backend"
 }
 
 variable "tfstate_storage_account_name" {
   description = "Storage account used by the Terraform remote backend."
   type        = string
-  default     = "cst8918tfstate9"
+  default     = "041164341tfstorage"
 }
 
 variable "tags" {

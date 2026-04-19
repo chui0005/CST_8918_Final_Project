@@ -1,9 +1,9 @@
 terraform {
   backend "azurerm" {
-    resource_group_name  = "rg-cst8918-tfstate"
-    storage_account_name = "cst8918tfstate9" # update after bootstrap
+    resource_group_name  = "kutt0011-cst8918-tf-backend"
+    storage_account_name = "041164341tfstorage"
     container_name       = "tfstate"
     key                  = "prod/terraform.tfstate"
-    use_oidc             = true
+    use_oidc             = false
   }
 }
