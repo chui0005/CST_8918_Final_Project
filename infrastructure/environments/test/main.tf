@@ -53,11 +53,11 @@ module "aks_test" {
 module "acr" {
   source = "../../modules/acr"
 
-  registry_name         = "cst8918acr${var.group_number}"
-  resource_group_name   = module.network.resource_group_name
-  location              = var.location
-  sku                   = "Basic"
-  tags                  = var.tags
+  registry_name       = "cst8918acr${var.group_number}"
+  resource_group_name = module.network.resource_group_name
+  location            = var.location
+  sku                 = "Basic"
+  tags                = var.tags
 }
 
 resource "azurerm_role_assignment" "aks_test_kubelet_acr_pull" {

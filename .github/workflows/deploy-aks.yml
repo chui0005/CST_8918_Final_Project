@@ -44,7 +44,7 @@ jobs:
       GROUP_NUMBER: ${{ vars.GROUP_NUMBER }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -87,7 +87,7 @@ jobs:
       GROUP_NUMBER: ${{ vars.GROUP_NUMBER }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
@@ -137,7 +137,7 @@ jobs:
       GROUP_NUMBER: ${{ vars.GROUP_NUMBER }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Azure login (OIDC)
         uses: azure/login@v2

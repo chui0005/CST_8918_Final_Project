@@ -49,18 +49,18 @@ resource "azurerm_federated_identity_credential" "github_main" {
   name                = "github-ref-refs-heads-main"
   resource_group_name = data.azurerm_resource_group.project.name
   parent_id           = azurerm_user_assigned_identity.github_actions.id
-  issuer    = "https://token.actions.githubusercontent.com"
-  subject   = "repo:${var.github_repository}:ref:refs/heads/main"
-  audience = ["api://AzureADTokenExchange"]
+  issuer              = "https://token.actions.githubusercontent.com"
+  subject             = "repo:${var.github_repository}:ref:refs/heads/main"
+  audience            = ["api://AzureADTokenExchange"]
 }
 
 resource "azurerm_federated_identity_credential" "github_pull_request" {
   name                = "github-pull-request"
   resource_group_name = data.azurerm_resource_group.project.name
   parent_id           = azurerm_user_assigned_identity.github_actions.id
-  issuer    = "https://token.actions.githubusercontent.com"
-  subject   = "repo:${var.github_repository}:pull_request"
-  audience = ["api://AzureADTokenExchange"]
+  issuer              = "https://token.actions.githubusercontent.com"
+  subject             = "repo:${var.github_repository}:pull_request"
+  audience            = ["api://AzureADTokenExchange"]
 }
 
 resource "azurerm_role_assignment" "project_rg_contributor" {
