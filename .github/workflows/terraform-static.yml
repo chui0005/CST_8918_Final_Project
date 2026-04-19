@@ -45,10 +45,10 @@ jobs:
           terraform init -backend=false -input=false
           terraform validate
 
-      - name: Install tfsec
-        uses: aquasecurity/setup-tfsec@v1
-        with:
-          version: v1.28.13
-
-      - name: Run tfsec
-        run: tfsec infrastructure
+      - name: Install and run tfsec
+        env:
+          TFSEC_VERSION: v1.28.13
+        run: |
+          set -euo pipefail
+          curl -fsSL https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+          tfsec infrastructure
