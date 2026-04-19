@@ -70,16 +70,25 @@ jobs:
           terraform_wrapper: false
 
       - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
+        uses: terraform-linters/setup-tflint@v6
         with:
           tflint_version: v0.51.2
+          github_token: ${{ github.token }}
 
       - name: Terraform init
         run: terraform init -input=false
 
+      - name: TFLint init (plugins)
+        working-directory: infrastructure
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: tflint --init --config .tflint.hcl
+
       - name: TFLint
         working-directory: infrastructure
-        run: tflint --format compact --chdir=environments/${{ matrix.environment }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: tflint --format compact --config .tflint.hcl --chdir=environments/${{ matrix.environment }}
 
       - name: Terraform plan
         run: terraform plan -no-color -input=false -out=tfplan.binary
