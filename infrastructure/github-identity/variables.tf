@@ -16,6 +16,12 @@ variable "github_repository" {
   default     = "chui0005/CST_8918_Final_Project"
 }
 
+variable "github_actions_oidc_extra_branch_refs" {
+  description = "Branch names (no refs/heads/ prefix) that may run GitHub Actions with OIDC on push or workflow_dispatch, e.g. feat/github-actions-ci so terraform plan runs before a PR exists."
+  type        = list(string)
+  default     = ["feat/github-actions-ci"]
+}
+
 variable "tfstate_resource_group_name" {
   description = "Resource group that contains the Terraform remote state storage account."
   type        = string

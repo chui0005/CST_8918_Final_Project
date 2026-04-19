@@ -63,6 +63,17 @@ resource "azurerm_federated_identity_credential" "github_pull_request" {
   audience            = ["api://AzureADTokenExchange"]
 }
 
+resource "azurerm_federated_identity_credential" "github_branch_workflows" {
+  for_each = toset(var.github_actions_oidc_extra_branch_refs)
+
+  name                = "github-ref-${substr(replace(replace(each.value, "/", "-"), ".", "-"), 0, 120)}"
+  resource_group_name = data.azurerm_resource_group.project.name
+  parent_id           = azurerm_user_assigned_identity.github_actions.id
+  issuer              = "https://token.actions.githubusercontent.com"
+  subject             = "repo:${var.github_repository}:ref:refs/heads/${each.value}"
+  audience            = ["api://AzureADTokenExchange"]
+}
+
 resource "azurerm_role_assignment" "project_rg_contributor" {
   scope                = data.azurerm_resource_group.project.id
   role_definition_name = "Contributor"

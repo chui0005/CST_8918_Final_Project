@@ -5,6 +5,7 @@ on:
     paths:
       - 'infrastructure/**'
       - '.github/workflows/terraform-static.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
