@@ -124,7 +124,7 @@ jobs:
         run: |
           set -euo pipefail
           gpn="${GROUP_NUMBER:-9}"
-          echo "rg=cst8918-final-project-group-${gpn}" >> "$GITHUB_OUTPUT"
+          echo "rg=cst8918-final-project-test-group-${gpn}" >> "$GITHUB_OUTPUT"
           echo "cluster=aks-cst8918-test-group-${gpn}" >> "$GITHUB_OUTPUT"
           if [ -n "${{ vars.ACR_LOGIN_SERVER }}" ]; then
             echo "server=${{ vars.ACR_LOGIN_SERVER }}" >> "$GITHUB_OUTPUT"
@@ -132,13 +132,16 @@ jobs:
             echo "server=cst8918acr${gpn}.azurecr.io" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Get AKS credentials (admin)
-        run: |
-          az aks get-credentials \
-            --resource-group "${{ steps.cfg.outputs.rg }}" \
-            --name "${{ steps.cfg.outputs.cluster }}" \
-            --overwrite-existing \
-            --admin
+      - name: Set up kubelogin
+        uses: azure/use-kubelogin@v1
+
+      - name: Set AKS context (Azure RBAC)
+        uses: azure/aks-set-context@v5
+        with:
+          resource-group: ${{ steps.cfg.outputs.rg }}
+          cluster-name: ${{ steps.cfg.outputs.cluster }}
+          admin: 'false'
+          use-kubelogin: 'true'
 
       - name: Apply manifest
         env:
@@ -194,13 +197,16 @@ jobs:
             echo "server=cst8918acr${gpn}.azurecr.io" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Get AKS credentials (admin)
-        run: |
-          az aks get-credentials \
-            --resource-group "${{ steps.cfg.outputs.rg }}" \
-            --name "${{ steps.cfg.outputs.cluster }}" \
-            --overwrite-existing \
-            --admin
+      - name: Set up kubelogin
+        uses: azure/use-kubelogin@v1
+
+      - name: Set AKS context (Azure RBAC)
+        uses: azure/aks-set-context@v5
+        with:
+          resource-group: ${{ steps.cfg.outputs.rg }}
+          cluster-name: ${{ steps.cfg.outputs.cluster }}
+          admin: 'false'
+          use-kubelogin: 'true'
 
       - name: Apply manifest
         env:
