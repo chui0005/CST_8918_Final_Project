@@ -72,3 +72,4 @@ jobs:
           acr-name: ${{ steps.acr.outputs.name }}
           image-repository: weather-app
           image-tag: ${{ github.sha }}
+

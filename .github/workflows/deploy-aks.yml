@@ -150,6 +150,7 @@ jobs:
       - name: Rollout status
         run: kubectl rollout status deployment/weather-app --timeout=300s
 
+
   deploy-prod:
     if: github.event_name == 'push'
     needs: [build-and-push]
@@ -210,3 +211,4 @@ jobs:
 
       - name: Rollout status
         run: kubectl rollout status deployment/weather-app --timeout=300s
+

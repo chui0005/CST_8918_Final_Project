@@ -55,3 +55,4 @@ jobs:
             -w /repo \
             aquasec/tfsec:v1.28.13 \
             infrastructure
+
