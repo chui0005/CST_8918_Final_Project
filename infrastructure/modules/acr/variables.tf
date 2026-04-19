@@ -1,10 +1,10 @@
-variable "registry_name" {
-  description = "Globally unique ACR name (alphanumeric only, 5-50 characters)."
+variable "acr_name" {
+  description = "Name of the Azure Container Registry (globally unique, alphanumeric only)."
   type        = string
 }
 
 variable "resource_group_name" {
-  description = "Resource group that hosts the registry."
+  description = "Resource group in which the ACR is deployed."
   type        = string
 }
 
@@ -14,13 +14,19 @@ variable "location" {
 }
 
 variable "sku" {
-  description = "ACR SKU (Basic, Standard, Premium)."
+  description = "SKU tier for the ACR. Valid values: Basic, Standard, Premium."
   type        = string
-  default     = "Basic"
+  default     = "Standard"
+}
+
+variable "admin_enabled" {
+  description = "Whether the ACR admin account is enabled."
+  type        = bool
+  default     = false
 }
 
 variable "tags" {
-  description = "Tags applied to the registry."
+  description = "Tags applied to the ACR."
   type        = map(string)
   default     = {}
 }

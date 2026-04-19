@@ -1,14 +1,14 @@
-output "id" {
-  description = "ACR resource ID."
+output "acr_id" {
+  description = "Resource ID of the ACR."
   value       = azurerm_container_registry.main.id
 }
 
-output "name" {
-  description = "ACR name (short form for az acr login)."
+output "acr_name" {
+  description = "Name of the ACR."
   value       = azurerm_container_registry.main.name
 }
 
-output "login_server" {
-  description = "Login server hostname (e.g. myregistry.azurecr.io)."
+output "acr_login_server" {
+  description = "Login server URL for the ACR (e.g. myregistry.azurecr.io)."
   value       = azurerm_container_registry.main.login_server
 }

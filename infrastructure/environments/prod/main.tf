@@ -6,12 +6,27 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.116.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.32.0"
+    }
   }
 }
 
 provider "azurerm" {
   features {}
   use_oidc = true
+}
+
+provider "kubernetes" {
+  config_path    = pathexpand(var.kubeconfig_path)
+  config_context = var.kubeconfig_context
+}
+
+# Shared ACR is created by the test stack; prod cluster and app pull from it.
+data "azurerm_container_registry" "weather" {
+  name                = "cst8918acr${var.group_number}"
+  resource_group_name = "cst8918-final-project-test-group-${var.group_number}"
 }
 
 module "network" {
@@ -43,6 +58,8 @@ module "aks_prod" {
   dns_prefix          = "cst8918-prod-${var.group_number}"
   kubernetes_version  = "1.34"
   vnet_subnet_id      = module.network.subnet_ids["prod"]
+  acr_id              = data.azurerm_container_registry.weather.id
+  attach_acr          = true
 
   node_vm_size       = "Standard_B2s"
   enable_autoscaling = true
@@ -52,14 +69,32 @@ module "aks_prod" {
   tags = var.tags
 }
 
-# ACR is created by the test environment stack; prod cluster needs pull access for CI/CD images.
-data "azurerm_container_registry" "weather" {
-  name                = "cst8918acr${var.group_number}"
-  resource_group_name = "cst8918-final-project-group-${var.group_number}"
+module "redis" {
+  source              = "../../modules/redis"
+  name                = "prod-redis-${var.group_number}"
+  resource_group_name = module.network.resource_group_name
+  location            = var.location
+  sku_name            = var.redis_sku_name
+  family              = var.redis_family
+  capacity            = var.redis_capacity
+  tags                = var.tags
 }
 
-resource "azurerm_role_assignment" "aks_prod_kubelet_acr_pull" {
-  scope                = data.azurerm_container_registry.weather.id
-  role_definition_name = "AcrPull"
-  principal_id         = module.aks_prod.kubelet_identity_object_id
+module "app" {
+  source = "../../modules/app"
+
+  providers = {
+    kubernetes = kubernetes
+  }
+
+  app_name        = var.app_name
+  namespace       = var.app_namespace
+  image           = "${data.azurerm_container_registry.weather.login_server}/${var.image_repository}:${var.image_tag}"
+  redis_host      = module.redis.redis_hostname
+  redis_port      = module.redis.redis_ssl_port
+  weather_api_key = var.weather_api_key
+  redis_password  = module.redis.primary_access_key
+  replicas        = var.app_replicas
+
+  depends_on = [module.aks_prod]
 }

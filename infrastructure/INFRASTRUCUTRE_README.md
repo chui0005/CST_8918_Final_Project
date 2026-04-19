@@ -1,8 +1,8 @@
 # Infrastructure — Terraform
 
-This directory contains all Terraform code for the CST8918 Final Project. It provisions the core Azure infrastructure required to run the Remix Weather Application on AKS.
+This directory contains all Terraform code for the CST8918 Final Project. It provisions the Azure infrastructure required to run the Remix Weather Application on AKS.
 
-## What is currently covered
+## What is covered
 
 ### Terraform Remote Backend
 
@@ -38,13 +38,57 @@ Two AKS clusters are provisioned — one per environment.
 | Setting | Test | Prod |
 |---------|------|------|
 | Cluster name | `aks-cst8918-test-group-9` | `aks-cst8918-prod-group-9` |
-| Kubernetes version | 1.32 | 1.32 |
+| Kubernetes version | 1.33 | 1.33 |
 | VM size | Standard_B2s | Standard_B2s |
 | Node count | 1 (fixed) | 1–3 (autoscaling) |
 | Subnet | `subnet-test` | `subnet-prod` |
 | Identity | SystemAssigned | SystemAssigned |
 | Network plugin | Azure CNI | Azure CNI |
 | Upgrade channel | patch | patch |
+| ACR pull access | via `AcrPull` role on kubelet identity | via `AcrPull` role on kubelet identity |
+
+---
+
+### Azure Container Registry (`modules/acr`)
+
+One ACR per environment, used to store the Remix Weather App Docker image.
+
+| Setting | Test | Prod |
+|---------|------|------|
+| Registry name | `group9testacr` | `group9prodacr` |
+| SKU | Standard | Standard |
+| Admin account | Disabled | Disabled |
+| AKS pull access | `AcrPull` role assigned to AKS kubelet identity | `AcrPull` role assigned to AKS kubelet identity |
+
+---
+
+### Azure Cache for Redis (`modules/redis`)
+
+One Redis Cache per environment, used by the weather app to cache API responses.
+
+| Setting | Test | Prod |
+|---------|------|------|
+| Instance name | `test-redis-9` | `prod-redis-9` |
+| SKU | Basic C0 | Standard C1 |
+| Non-SSL port | Disabled | Disabled |
+| Minimum TLS | 1.2 | 1.2 |
+
+---
+
+### Kubernetes App Deployment (`modules/app`)
+
+Deploys the Remix Weather Application into a dedicated namespace on each AKS cluster.
+
+| Resource | Test | Prod |
+|----------|------|------|
+| Namespace | `weather-test` | `weather-prod` |
+| Deployment | `weather-app` | `weather-app` |
+| Replicas | 1 | 2 |
+| Service | LoadBalancer (port 80 → 3000) | LoadBalancer (port 80 → 3000) |
+| Image | `group9testacr.azurecr.io/weather:<tag>` | `group9prodacr.azurecr.io/weather:<tag>` |
+| Secrets | Kubernetes Secret (`WEATHER_API_KEY`, `REDIS_PASSWORD`) | Kubernetes Secret (`WEATHER_API_KEY`, `REDIS_PASSWORD`) |
+| Health probes | Readiness + Liveness on `/` port 3000 | Readiness + Liveness on `/` port 3000 |
+| Resource limits | 500m CPU / 512Mi memory | 500m CPU / 512Mi memory |
 
 ---
 
@@ -64,7 +108,19 @@ infrastructure/
 │   │   ├── main.tf
 │   │   ├── variables.tf
 │   │   └── outputs.tf
-│   └── aks/                 # AKS cluster with optional autoscaling
+│   ├── aks/                 # AKS cluster with optional autoscaling and ACR pull access
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── acr/                 # Azure Container Registry
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   ├── redis/               # Azure Cache for Redis
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── app/                 # Kubernetes Namespace, Secret, Deployment, and Service
 │       ├── main.tf
 │       ├── variables.tf
 │       └── outputs.tf
@@ -84,13 +140,10 @@ infrastructure/
 └── .tflint.hcl              # tflint configuration for CI lint checks
 ```
 
-## What is not yet covered
+## Remaining work
 
-The following resources are managed by other team members and will be added in separate pull requests:
+The following will be added in separate pull requests:
 
-- Azure Container Registry (ACR)
-- Redis Cache (Azure Cache for Redis) for test and prod
-- Kubernetes Deployment and Service manifests for the Remix Weather App
 - GitHub Actions workflows (static analysis, plan, apply, Docker build, app deploy)
 - Azure federated identity setup for GitHub Actions OIDC
 
@@ -98,16 +151,41 @@ The following resources are managed by other team members and will be added in s
 
 > **Before running any environment**, complete the bootstrap step to create the remote backend. See [bootstrap/README.md](bootstrap/README.md).
 
+### Supplying the OpenWeather API key
+
+The `weather_api_key` variable is sensitive and must **never** be committed to the repository. Supply it at apply time using one of:
+
 ```bash
-# Validate an environment (no backend required)
+# Option A — .env file (recommended for local development)
+# Copy .env.example to .env at the repo root and fill in your key.
+# Then source it before each terminal session:
+set -a && source ../../.env && set +a
+
+# Option B — inline environment variable (recommended for CI)
+export TF_VAR_weather_api_key="your-key-here"
+
+# Option C — gitignored local override file
+echo 'weather_api_key = "your-key-here"' > terraform.tfvars.local
+```
+
+### Applying an environment
+
+```bash
+# Validate (no backend required)
 cd environments/test
 terraform init -backend=false
 terraform validate
 
-# Full init and plan (requires backend to be bootstrapped)
+# Load secrets from .env (Option A), then init, plan, and apply
+# from the environments directory
+set -a && source ../../.env && set +a
 terraform init
 terraform plan
-
-# Apply
 terraform apply
 ```
+
+> **Note:** After a fresh `terraform apply` that creates a new AKS cluster, run the following before applying the app module:
+> ```bash
+> az aks get-credentials --resource-group <rg-name> --name <cluster-name> --admin --overwrite-existing
+> ```
+> The `--admin` flag uses the cluster's local admin credentials. This updates `~/.kube/config` so the Kubernetes provider can authenticate to the new cluster.
