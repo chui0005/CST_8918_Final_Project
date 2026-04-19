@@ -4,6 +4,5 @@ terraform {
     storage_account_name = "041164341tfstorage"
     container_name       = "tfstate"
     key                  = "prod/terraform.tfstate"
-    use_oidc             = false
   }
 }
