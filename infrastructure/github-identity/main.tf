@@ -92,14 +92,28 @@ resource "azurerm_role_assignment" "acr_push" {
   principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
 }
 
-resource "azurerm_role_assignment" "aks_test_cluster_admin" {
+# User kubeconfig (kubelogin): listClusterUserCredential on the cluster.
+resource "azurerm_role_assignment" "aks_test_cluster_user" {
   scope                = data.azurerm_kubernetes_cluster.test.id
-  role_definition_name = "Azure Kubernetes Service Cluster Admin Role"
+  role_definition_name = "Azure Kubernetes Service Cluster User Role"
   principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
 }
 
-resource "azurerm_role_assignment" "aks_prod_cluster_admin" {
+resource "azurerm_role_assignment" "aks_prod_cluster_user" {
   scope                = data.azurerm_kubernetes_cluster.prod.id
-  role_definition_name = "Azure Kubernetes Service Cluster Admin Role"
+  role_definition_name = "Azure Kubernetes Service Cluster User Role"
+  principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
+}
+
+# Kubernetes API access when AKS uses Entra ID + Azure RBAC (local accounts disabled).
+resource "azurerm_role_assignment" "aks_test_rbac_cluster_admin" {
+  scope                = data.azurerm_kubernetes_cluster.test.id
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
+  principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
+}
+
+resource "azurerm_role_assignment" "aks_prod_rbac_cluster_admin" {
+  scope                = data.azurerm_kubernetes_cluster.prod.id
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
   principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
 }
