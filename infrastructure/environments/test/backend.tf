@@ -4,7 +4,7 @@ terraform {
     storage_account_name = "041164341tfstorage"
     container_name       = "tfstate"
     key                  = "test/terraform.tfstate"
-    # Local dev: use `az login`. CI: use azure/login@v2 before init (DefaultAzureCredential chain).
+    # Local dev: use `az login`. CI: use azure/login before init (DefaultAzureCredential chain).
     use_oidc = false
   }
 }

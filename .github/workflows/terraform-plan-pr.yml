@@ -38,6 +38,9 @@ jobs:
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       ARM_USE_OIDC: true
       TF_IN_AUTOMATION: true
+      AZURE_LOGIN_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+      AZURE_LOGIN_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_LOGIN_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     defaults:
       run:
         working-directory: infrastructure/environments/${{ matrix.environment }}
@@ -45,12 +48,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Require Azure OIDC configuration
+        shell: bash
+        run: |
+          if [ -z "${AZURE_LOGIN_CLIENT_ID}" ] || [ -z "${AZURE_LOGIN_TENANT_ID}" ] || [ -z "${AZURE_LOGIN_SUBSCRIPTION_ID}" ]; then
+            echo "::error::Set Actions secrets AZURE_CLIENT_ID (or repository variable), AZURE_TENANT_ID, and AZURE_SUBSCRIPTION_ID. Pull requests from forks cannot use this repo's secrets."
+            exit 1
+          fi
+
       - name: Azure login (OIDC)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ env.AZURE_LOGIN_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_LOGIN_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_LOGIN_SUBSCRIPTION_ID }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
