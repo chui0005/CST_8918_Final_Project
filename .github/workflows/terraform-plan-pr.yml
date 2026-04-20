@@ -41,7 +41,7 @@ jobs:
       AZURE_LOGIN_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
       AZURE_LOGIN_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_LOGIN_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      TF_VAR_weather_api_key: ${{ secrets.WEATHER_API_KEY }}
+      TF_VAR_weather_api_key: ${{ secrets.WEATHER_API_KEY || vars.WEATHER_API_KEY }}
     defaults:
       run:
         working-directory: infrastructure/environments/${{ matrix.environment }}
@@ -52,14 +52,14 @@ jobs:
       - name: Require Azure OIDC configuration
         shell: bash
         env:
-          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY || vars.WEATHER_API_KEY }}
         run: |
           if [ -z "${AZURE_LOGIN_CLIENT_ID}" ] || [ -z "${AZURE_LOGIN_TENANT_ID}" ] || [ -z "${AZURE_LOGIN_SUBSCRIPTION_ID}" ]; then
             echo "::error::Set Actions secrets AZURE_CLIENT_ID (or repository variable), AZURE_TENANT_ID, and AZURE_SUBSCRIPTION_ID. Pull requests from forks cannot use this repo's secrets."
             exit 1
           fi
           if [ -z "${WEATHER_API_KEY}" ]; then
-            echo "::error::Set Actions secret WEATHER_API_KEY (OpenWeather key for Terraform variable weather_api_key)."
+            echo "::error::Set repository secret WEATHER_API_KEY or variable WEATHER_API_KEY (OpenWeather key → Terraform weather_api_key)."
             exit 1
           fi
 
@@ -97,6 +97,38 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         # --config is resolved relative to --chdir; use repo-root path so plugins from --init still apply.
         run: tflint --format compact --config "${GITHUB_WORKSPACE}/infrastructure/.tflint.hcl" --chdir=environments/${{ matrix.environment }}
+
+      # Kubernetes provider uses ~/.kube/config; AKS has local_account_disabled + Entra ID → kubelogin + Azure CLI.
+      - name: Set up kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: v0.2.17
+
+      - name: AKS credentials for Kubernetes provider
+        shell: bash
+        env:
+          GROUP_NUMBER: ${{ vars.GROUP_NUMBER }}
+          AKS_TEST_RG: ${{ vars.AKS_TEST_RESOURCE_GROUP }}
+          AKS_PROD_RG: ${{ vars.AKS_PROD_RESOURCE_GROUP }}
+        run: |
+          set -euo pipefail
+          gpn="${GROUP_NUMBER:-9}"
+          case "${{ matrix.environment }}" in
+            test)
+              rg="${AKS_TEST_RG:-cst8918-final-project-group-${gpn}}"
+              cluster="aks-cst8918-test-group-${gpn}"
+              ;;
+            prod)
+              rg="${AKS_PROD_RG:-cst8918-final-project-group-${gpn}}"
+              cluster="aks-cst8918-prod-group-${gpn}"
+              ;;
+            *)
+              echo "::error::Unknown environment ${{ matrix.environment }}"
+              exit 1
+              ;;
+          esac
+          az aks get-credentials --resource-group "$rg" --name "$cluster" --overwrite-existing
+          kubelogin convert-kubeconfig -l azurecli
 
       - name: Terraform plan
         run: terraform plan -no-color -input=false -out=tfplan.binary
