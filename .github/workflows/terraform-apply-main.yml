@@ -32,6 +32,7 @@ jobs:
       AZURE_LOGIN_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
       AZURE_LOGIN_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_LOGIN_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_weather_api_key: ${{ secrets.WEATHER_API_KEY }}
     defaults:
       run:
         working-directory: infrastructure/environments/${{ matrix.environment }}
@@ -41,9 +42,15 @@ jobs:
 
       - name: Require Azure OIDC configuration
         shell: bash
+        env:
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
         run: |
           if [ -z "${AZURE_LOGIN_CLIENT_ID}" ] || [ -z "${AZURE_LOGIN_TENANT_ID}" ] || [ -z "${AZURE_LOGIN_SUBSCRIPTION_ID}" ]; then
             echo "::error::Set Actions secrets AZURE_CLIENT_ID (or repository variable), AZURE_TENANT_ID, and AZURE_SUBSCRIPTION_ID."
+            exit 1
+          fi
+          if [ -z "${WEATHER_API_KEY}" ]; then
+            echo "::error::Set Actions secret WEATHER_API_KEY (OpenWeather key for Terraform variable weather_api_key)."
             exit 1
           fi
 
