@@ -20,9 +20,11 @@ permissions:
   id-token: write
   pull-requests: write
 
+# One run at a time per repo against the shared remote backend. cancel-in-progress: true cancels
+# mid-plan and leaves Azure blob state locks (stale lock errors on the next run).
 concurrency:
-  group: terraform-plan-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: terraform-remote-state-${{ github.repository }}
+  cancel-in-progress: false
 
 jobs:
   tflint-plan:
@@ -131,7 +133,7 @@ jobs:
           kubelogin convert-kubeconfig -l azurecli
 
       - name: Terraform plan
-        run: terraform plan -no-color -input=false -out=tfplan.binary
+        run: terraform plan -no-color -input=false -lock-timeout=15m -out=tfplan.binary
 
       - name: Upload plan artifact
         uses: actions/upload-artifact@v4

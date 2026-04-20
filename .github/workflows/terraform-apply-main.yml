@@ -12,6 +12,10 @@ permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: terraform-remote-state-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   apply:
     runs-on: ubuntu-latest
@@ -20,9 +24,6 @@ jobs:
       fail-fast: false
       matrix:
         environment: [test, prod]
-    concurrency:
-      group: terraform-apply-${{ matrix.environment }}
-      cancel-in-progress: false
     env:
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -101,4 +102,4 @@ jobs:
           kubelogin convert-kubeconfig -l azurecli
 
       - name: Terraform apply
-        run: terraform apply -auto-approve -input=false
+        run: terraform apply -auto-approve -input=false -lock-timeout=15m
