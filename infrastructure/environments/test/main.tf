@@ -26,7 +26,7 @@ provider "kubernetes" {
 module "network" {
   source = "../../modules/network"
 
-  resource_group_name = "cst8918-final-project-test-group-${var.group_number}"
+  resource_group_name = "cst8918-final-project-group-${var.group_number}"
   location            = var.location
   group_number        = var.group_number
   environment         = "test"

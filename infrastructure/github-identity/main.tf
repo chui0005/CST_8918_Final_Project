@@ -24,12 +24,12 @@ data "azurerm_storage_account" "tfstate" {
 
 data "azurerm_container_registry" "shared" {
   name                = "cst8918acr${var.group_number}"
-  resource_group_name = "cst8918-final-project-test-group-${var.group_number}"
+  resource_group_name = data.azurerm_resource_group.project.name
 }
 
 data "azurerm_kubernetes_cluster" "test" {
   name                = "aks-cst8918-test-group-${var.group_number}"
-  resource_group_name = "cst8918-final-project-test-group-${var.group_number}"
+  resource_group_name = data.azurerm_resource_group.project.name
 }
 
 data "azurerm_kubernetes_cluster" "prod" {

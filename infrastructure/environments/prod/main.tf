@@ -26,7 +26,7 @@ provider "kubernetes" {
 # Shared ACR is created by the test stack; prod cluster and app pull from it.
 data "azurerm_container_registry" "weather" {
   name                = "cst8918acr${var.group_number}"
-  resource_group_name = "cst8918-final-project-test-group-${var.group_number}"
+  resource_group_name = "cst8918-final-project-group-${var.group_number}"
 }
 
 module "network" {

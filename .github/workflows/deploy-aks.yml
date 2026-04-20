@@ -124,7 +124,7 @@ jobs:
         run: |
           set -euo pipefail
           gpn="${GROUP_NUMBER:-9}"
-          echo "rg=cst8918-final-project-test-group-${gpn}" >> "$GITHUB_OUTPUT"
+          echo "rg=cst8918-final-project-group-${gpn}" >> "$GITHUB_OUTPUT"
           echo "cluster=aks-cst8918-test-group-${gpn}" >> "$GITHUB_OUTPUT"
           if [ -n "${{ vars.ACR_LOGIN_SERVER }}" ]; then
             echo "server=${{ vars.ACR_LOGIN_SERVER }}" >> "$GITHUB_OUTPUT"
