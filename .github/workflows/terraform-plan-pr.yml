@@ -88,7 +88,8 @@ jobs:
         working-directory: infrastructure
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: tflint --format compact --config .tflint.hcl --chdir=environments/${{ matrix.environment }}
+        # --config is resolved relative to --chdir; use repo-root path so plugins from --init still apply.
+        run: tflint --format compact --config "${GITHUB_WORKSPACE}/infrastructure/.tflint.hcl" --chdir=environments/${{ matrix.environment }}
 
       - name: Terraform plan
         run: terraform plan -no-color -input=false -out=tfplan.binary

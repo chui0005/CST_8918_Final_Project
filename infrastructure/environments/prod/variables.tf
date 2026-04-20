@@ -22,18 +22,6 @@ variable "kubeconfig_context" {
   default     = null
 }
 
-variable "acr_sku" {
-  description = "SKU tier for the prod ACR instance."
-  type        = string
-  default     = "Standard"
-}
-
-variable "acr_admin_enabled" {
-  description = "Whether the prod ACR admin account is enabled."
-  type        = bool
-  default     = false
-}
-
 variable "redis_sku_name" {
   description = "Redis SKU name for the prod environment."
   type        = string
