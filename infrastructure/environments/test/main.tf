@@ -73,7 +73,7 @@ module "aks_test" {
 
 module "redis" {
   source              = "../../modules/redis"
-  name                = "test-redis-${var.group_number}st"
+  name                = "test-redis-finpro-${var.group_number}st"
   resource_group_name = module.network.resource_group_name
   location            = var.location
   sku_name            = var.redis_sku_name
