@@ -35,6 +35,11 @@ Two environments are provisioned: **test** and **prod**, each with their own AKS
 | Deploy to AKS test | PR to `main` (app code changes) |
 | Deploy to AKS prod | Push to `main` (app code changes) |
 
+
+# Completed GitHub Actions workflows
+
+![Github Actions](./github_actions_screenshot.png)
+
 ## Infrastructure Setup
 
 ### Prerequisites
