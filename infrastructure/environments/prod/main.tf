@@ -49,6 +49,15 @@ module "network" {
   tags = var.tags
 }
 
+# Refactor: the ACR pull role assignment previously lived at the root
+# (azurerm_role_assignment.aks_prod_kubelet_acr_pull) and now lives inside the
+# aks module. This is a state move only — no Azure API calls — which avoids
+# needing Microsoft.Authorization/roleAssignments/delete on the CI principal.
+moved {
+  from = azurerm_role_assignment.aks_prod_kubelet_acr_pull
+  to   = module.aks_prod.azurerm_role_assignment.aks_acr_pull[0]
+}
+
 module "aks_prod" {
   source = "../../modules/aks"
 
