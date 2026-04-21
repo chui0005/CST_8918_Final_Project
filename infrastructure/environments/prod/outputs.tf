@@ -24,18 +24,18 @@ output "aks_cluster_id" {
 }
 
 output "acr_name" {
-  description = "Name of the prod ACR instance."
-  value       = module.acr.acr_name
+  description = "Name of the shared ACR used for images (managed in test stack)."
+  value       = data.azurerm_container_registry.weather.name
 }
 
 output "acr_id" {
-  description = "Resource ID of the prod ACR instance."
-  value       = module.acr.acr_id
+  description = "Resource ID of the shared ACR."
+  value       = data.azurerm_container_registry.weather.id
 }
 
 output "acr_login_server" {
-  description = "Login server for the prod ACR instance."
-  value       = module.acr.acr_login_server
+  description = "Login server for the shared ACR."
+  value       = data.azurerm_container_registry.weather.login_server
 }
 
 output "redis_name" {
@@ -65,5 +65,5 @@ output "app_namespace" {
 
 output "app_image" {
   description = "Fully qualified image name for the prod app."
-  value       = "${module.acr.acr_login_server}/${var.image_repository}:${var.image_tag}"
+  value       = "${data.azurerm_container_registry.weather.login_server}/${var.image_repository}:${var.image_tag}"
 }

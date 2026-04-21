@@ -1,0 +1,5 @@
+group_number      = "9"
+github_repository = "YOUR_ORG/YOUR_REPO"
+
+# Optional: branches (no refs/heads/) that run OIDC workflows on push/dispatch
+# github_actions_oidc_extra_branch_refs = ["feat/github-actions-ci", "feat/my-work"]

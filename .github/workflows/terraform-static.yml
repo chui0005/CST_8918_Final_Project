@@ -1,0 +1,58 @@
+name: Terraform static analysis
+
+on:
+  push:
+    paths:
+      - 'infrastructure/**'
+      - '.github/workflows/terraform-static.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fmt-validate-tfsec:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TF_IN_AUTOMATION: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.9.0
+          terraform_wrapper: false
+
+      - name: Terraform format
+        run: terraform fmt -check -recursive infrastructure
+
+      - name: Init and validate (test)
+        working-directory: infrastructure/environments/test
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: Init and validate (prod)
+        working-directory: infrastructure/environments/prod
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: Init and validate (github-identity)
+        working-directory: infrastructure/github-identity
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      - name: Run tfsec
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/repo" \
+            -w /repo \
+            aquasec/tfsec:v1.28.13 \
+            infrastructure
+

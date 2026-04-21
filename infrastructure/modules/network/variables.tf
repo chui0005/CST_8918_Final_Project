@@ -3,6 +3,12 @@ variable "resource_group_name" {
   type        = string
 }
 
+variable "create_resource_group" {
+  description = "When false, the resource group must already exist (e.g. created by the test stack) and is only referenced."
+  type        = bool
+  default     = true
+}
+
 variable "location" {
   description = "Azure region."
   type        = string

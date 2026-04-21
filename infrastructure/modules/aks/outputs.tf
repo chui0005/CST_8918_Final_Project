@@ -29,3 +29,8 @@ output "node_resource_group" {
   description = "Auto-generated resource group name where AKS nodes are placed."
   value       = azurerm_kubernetes_cluster.main.node_resource_group
 }
+
+output "kubelet_identity_object_id" {
+  description = "Object ID of the kubelet managed identity (for AcrPull and similar role assignments)."
+  value       = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
+}

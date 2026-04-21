@@ -17,7 +17,7 @@ variable "location" {
 variable "kubernetes_version" {
   description = "Kubernetes version for control plane and node pools."
   type        = string
-  default     = "1.32"
+  default     = "1.34"
 }
 
 variable "dns_prefix" {
@@ -75,13 +75,13 @@ variable "attach_acr" {
 variable "service_cidr" {
   description = "CIDR range for Kubernetes services. Must not overlap with the VNet or subnet CIDRs."
   type        = string
-  default     = "10.96.0.0/16"
+  default     = "172.16.0.0/16"
 }
 
 variable "dns_service_ip" {
   description = "IP address for the Kubernetes DNS service. Must be within service_cidr."
   type        = string
-  default     = "10.96.0.10"
+  default     = "172.16.0.10"
 }
 
 variable "tags" {

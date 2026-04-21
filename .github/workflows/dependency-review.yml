@@ -1,0 +1,24 @@
+name: Dependency Review
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Dependency review
+        id: dependency-review
+        continue-on-error: true
+        uses: actions/dependency-review-action@v4
+
+      - name: Warn when dependency graph is disabled
+        if: steps.dependency-review.outcome == 'failure'
+        run: echo "::warning::Dependency graph is disabled for this repository. Enable it in Settings > Security & analysis to enforce dependency review."

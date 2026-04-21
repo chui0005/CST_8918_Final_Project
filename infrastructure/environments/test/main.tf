@@ -26,7 +26,7 @@ provider "kubernetes" {
 module "network" {
   source = "../../modules/network"
 
-  resource_group_name = "cst8918-final-project-test-group-${var.group_number}"
+  resource_group_name = "cst8918-final-project-group-${var.group_number}"
   location            = var.location
   group_number        = var.group_number
   environment         = "test"
@@ -42,6 +42,16 @@ module "network" {
   tags = var.tags
 }
 
+module "acr" {
+  source              = "../../modules/acr"
+  acr_name            = "cst8918acr${var.group_number}"
+  resource_group_name = module.network.resource_group_name
+  location            = var.location
+  sku                 = var.acr_sku
+  admin_enabled       = var.acr_admin_enabled
+  tags                = var.tags
+}
+
 module "aks_test" {
   source = "../../modules/aks"
 
@@ -49,26 +59,16 @@ module "aks_test" {
   resource_group_name = module.network.resource_group_name
   location            = var.location
   dns_prefix          = "cst8918-test-${var.group_number}"
-  kubernetes_version  = "1.33"
+  kubernetes_version  = "1.34"
   vnet_subnet_id      = module.network.subnet_ids["test"]
-  acr_id     = module.acr.acr_id
-  attach_acr = true
+  acr_id              = module.acr.acr_id
+  attach_acr          = true
 
   node_vm_size       = "Standard_B2s"
   node_count         = 1
   enable_autoscaling = false
 
   tags = var.tags
-}
-
-module "acr" {
-  source              = "../../modules/acr"
-  acr_name            = "group${var.group_number}testacrst"
-  resource_group_name = module.network.resource_group_name
-  location            = var.location
-  sku                 = var.acr_sku
-  admin_enabled       = var.acr_admin_enabled
-  tags                = var.tags
 }
 
 module "redis" {

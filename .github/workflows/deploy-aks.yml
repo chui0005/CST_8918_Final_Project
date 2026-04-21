@@ -1,0 +1,224 @@
+name: Deploy Weather app to AKS
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'public/**'
+      - 'remix.config.js'
+      - 'remix.env.d.ts'
+      - 'tsconfig.json'
+      - 'deploy/kubernetes/**'
+      - '.github/workflows/deploy-aks.yml'
+      - '.github/actions/docker-acr-push/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'public/**'
+      - 'remix.config.js'
+      - 'remix.env.d.ts'
+      - 'tsconfig.json'
+      - 'deploy/kubernetes/**'
+      - '.github/workflows/deploy-aks.yml'
+      - '.github/actions/docker-acr-push/**'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GROUP_NUMBER: ${{ vars.GROUP_NUMBER }}
+      AZURE_LOGIN_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+      AZURE_LOGIN_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_LOGIN_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require Azure OIDC configuration
+        shell: bash
+        run: |
+          if [ -z "${AZURE_LOGIN_CLIENT_ID}" ] || [ -z "${AZURE_LOGIN_TENANT_ID}" ] || [ -z "${AZURE_LOGIN_SUBSCRIPTION_ID}" ]; then
+            echo "::error::Set Actions secrets AZURE_CLIENT_ID (or repository variable), AZURE_TENANT_ID, and AZURE_SUBSCRIPTION_ID. Pull requests from forks cannot use this repo's secrets."
+            exit 1
+          fi
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_LOGIN_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_LOGIN_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_LOGIN_SUBSCRIPTION_ID }}
+
+      - name: Resolve ACR settings
+        id: acr
+        shell: bash
+        run: |
+          set -euo pipefail
+          gpn="${GROUP_NUMBER:-9}"
+          if [ -n "${{ vars.ACR_NAME }}" ]; then
+            echo "name=${{ vars.ACR_NAME }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=cst8918acr${gpn}" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "${{ vars.ACR_LOGIN_SERVER }}" ]; then
+            echo "server=${{ vars.ACR_LOGIN_SERVER }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "server=cst8918acr${gpn}.azurecr.io" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push
+        uses: ./.github/actions/docker-acr-push
+        with:
+          registry-server: ${{ steps.acr.outputs.server }}
+          acr-name: ${{ steps.acr.outputs.name }}
+          image-repository: weather-app
+          image-tag: ${{ github.sha }}
+
+  deploy-test:
+    if: github.event_name == 'pull_request'
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GROUP_NUMBER: ${{ vars.GROUP_NUMBER }}
+      AZURE_LOGIN_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+      AZURE_LOGIN_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_LOGIN_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require Azure OIDC configuration
+        shell: bash
+        run: |
+          if [ -z "${AZURE_LOGIN_CLIENT_ID}" ] || [ -z "${AZURE_LOGIN_TENANT_ID}" ] || [ -z "${AZURE_LOGIN_SUBSCRIPTION_ID}" ]; then
+            echo "::error::Set Actions secrets AZURE_CLIENT_ID (or repository variable), AZURE_TENANT_ID, and AZURE_SUBSCRIPTION_ID. Pull requests from forks cannot use this repo's secrets."
+            exit 1
+          fi
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_LOGIN_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_LOGIN_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_LOGIN_SUBSCRIPTION_ID }}
+
+      - name: Resolve deployment settings
+        id: cfg
+        shell: bash
+        run: |
+          set -euo pipefail
+          gpn="${GROUP_NUMBER:-9}"
+          echo "rg=cst8918-final-project-group-${gpn}" >> "$GITHUB_OUTPUT"
+          echo "cluster=aks-cst8918-test-group-${gpn}" >> "$GITHUB_OUTPUT"
+          if [ -n "${{ vars.ACR_LOGIN_SERVER }}" ]; then
+            echo "server=${{ vars.ACR_LOGIN_SERVER }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "server=cst8918acr${gpn}.azurecr.io" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: v0.2.17
+
+      - name: Set AKS context (Azure RBAC)
+        uses: azure/aks-set-context@v5
+        with:
+          resource-group: ${{ steps.cfg.outputs.rg }}
+          cluster-name: ${{ steps.cfg.outputs.cluster }}
+          admin: 'false'
+          use-kubelogin: 'true'
+
+      - name: Apply manifest
+        env:
+          IMAGE: ${{ steps.cfg.outputs.server }}/weather-app:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          sed "s|IMAGE_PLACEHOLDER|${IMAGE}|g" deploy/kubernetes/weather-app.yaml | kubectl apply -f -
+
+      - name: Rollout status
+        run: kubectl rollout status deployment/weather-app --timeout=300s
+
+
+  deploy-prod:
+    if: github.event_name == 'push'
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GROUP_NUMBER: ${{ vars.GROUP_NUMBER }}
+      AZURE_LOGIN_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+      AZURE_LOGIN_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_LOGIN_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require Azure OIDC configuration
+        shell: bash
+        run: |
+          if [ -z "${AZURE_LOGIN_CLIENT_ID}" ] || [ -z "${AZURE_LOGIN_TENANT_ID}" ] || [ -z "${AZURE_LOGIN_SUBSCRIPTION_ID}" ]; then
+            echo "::error::Set Actions secrets AZURE_CLIENT_ID (or repository variable), AZURE_TENANT_ID, and AZURE_SUBSCRIPTION_ID."
+            exit 1
+          fi
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_LOGIN_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_LOGIN_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_LOGIN_SUBSCRIPTION_ID }}
+
+      - name: Resolve deployment settings
+        id: cfg
+        shell: bash
+        run: |
+          set -euo pipefail
+          gpn="${GROUP_NUMBER:-9}"
+          echo "rg=cst8918-final-project-group-${gpn}" >> "$GITHUB_OUTPUT"
+          echo "cluster=aks-cst8918-prod-group-${gpn}" >> "$GITHUB_OUTPUT"
+          if [ -n "${{ vars.ACR_LOGIN_SERVER }}" ]; then
+            echo "server=${{ vars.ACR_LOGIN_SERVER }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "server=cst8918acr${gpn}.azurecr.io" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: v0.2.17
+
+      - name: Set AKS context (Azure RBAC)
+        uses: azure/aks-set-context@v5
+        with:
+          resource-group: ${{ steps.cfg.outputs.rg }}
+          cluster-name: ${{ steps.cfg.outputs.cluster }}
+          admin: 'false'
+          use-kubelogin: 'true'
+
+      - name: Apply manifest
+        env:
+          IMAGE: ${{ steps.cfg.outputs.server }}/weather-app:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          sed "s|IMAGE_PLACEHOLDER|${IMAGE}|g" deploy/kubernetes/weather-app.yaml | kubectl apply -f -
+
+      - name: Rollout status
+        run: kubectl rollout status deployment/weather-app --timeout=300s
+
